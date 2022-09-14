@@ -127,4 +127,142 @@ FROM    Customer;
 SELECT * FROM book;
 SELECT * FROM customer;
 
+-----------------------------
+-- SQL 고급(2) - 0914
+
+SELECT  *   FROM    Customer;
+
+-- `ROWNUM` : select 문에서 where조건절에서 통과한 행들에 대하여 동적으로 순번을 출력함
+-- 순번은 1번부터 시작함.
+-- 테이블을 정렬하여 상위 5행 하위 5행을 가져올 경우에 사용함.
+
+-- 질의 4-11 고객 목록에서 고객번호, 이름, 전화번호를 앞의 두 명만 보이시오. 
+SELECT  ROWNUM "순번", 
+        custid, 
+        name, 
+        phone
+FROM    customer
+WHERE   ROWNUM <=2;
+
+
+-- rownum은 ORDER BY에 영향을 받음
+SELECT  ROWNUM "순번", bookid, bookname, price
+FROM    book
+WHERE   ROWNUM <=6
+ORDER BY  price;
+
+
+-- 가격이 가장 낮은 책 5권 출력
+SELECT  ROWNUM, b.*
+FROM    (select * from book ORDER BY price) b;
+
+SELECT  ROWNUM, b.*
+FROM    (select * from book ORDER BY price) b
+            -- from에 'select문'이 있으면 SQL은 내부적으로 테이블로 간주함.
+WHERE   ROWNUM <=3;
+
+
+----------------------
+
+
+--  질의 4-12 마당서점의 고객별 판매액을 보이시오(결과는 고객이름과 고객별 판매액을 출력).
+SELECT (SELECT	name 
+        FROM 	customer cs 
+        WHERE	cs.custid = od.custid) "name", 
+        Sum(od.salesprice) "Total"
+FROM    orders od
+group by custid;
+
+---------------------------
+
+-- 비교 연산자
+-- 질의 4-15 평균 주문금액 이하의 주문에 대해서 주문번호와 금액을 보이시오.
+
+SELECT  orderid,
+        salesprice
+FROM    orders
+WHERE   salesprice <= (SELECT   AVG(salesprice)
+                        FROM   orders);
+--질의 4-16 각 고객의 평균 주문금액보다 큰 금액의 주문 내역에 대해서 주문번호, 고객번호,금액을 보이시오.
+SELECT  orderid "주문번호",
+        custid "고객아이디",
+        salesprice "주문금액"
+FROM    orders od
+WHERE   salesprice > (SELECT   AVG(salesprice)
+                        FROM   orders so
+                        WHERE   od.custid = so.custid);
+                        
+
+----------------
+
+-- 질의 4-14 고객번호가 2 이하인 고객의 판매액을 보이시오.(결과는 고객이름과 고객별 판매액 출력)
+SELECT  cs.name, 
+        SUM(od.salesprice)"Total"
+        
+FROM   (SELECT  custid,name
+        FROM    customer
+        WHERE   custid <=2) cs, 
+        orders od
+        
+WHERE   cs.custid = od.custid
+GROUP BY cs.name;
+
+-- 위 질의 부속질의 사용하지 않고 출력하기.
+SELECT  cs.name, 
+        SUM(od.salesprice)"Total"       
+FROM    customer cs, 
+        orders od     
+WHERE   cs.custid = od.custid AND cs.custid <=2
+GROUP BY cs.name;
+
+
+-- IN, NOT IN
+--질의 4-16 대한민국에 거주하는 고객에게 판매한 도서의 총판매액을 구하시오.
+
+SELECT  SUM(salesprice) "Total"
+FROM    orders
+WHERE   custid IN  (SELECT  custid
+                    FROM    customer
+                    WHERE   address LIKE '%대한민국%');
+
+--ALL, SOME(ANY)
+-- ALL : 모두 출력
+-- SOME(ANY): 최소한 한 개를 만족하는 경우 모두 출력
+
+-- 질의 4-18 3번 고객이 주문한 도서의 최고 금액보다 더 비싼 도서를 구입한 주문의 주문번호와 금액을 보이시오.
+SELECT  orderid,
+        salesprice
+FROM    orders   
+WHERE   salesprice > ALL(SELECT  salesprice -- MAX(salesprice)
+                         FROM    orders
+                         WHERE   custid = '3');
+
+
+SELECT  orderid,
+        salesprice
+FROM    orders   
+WHERE   salesprice > SOME(SELECT  salesprice -- MIN(salesprice)
+                         FROM    orders
+                         WHERE   custid = '3');
+
+
+-- EXISTS, NOT EXISTS
+-- EXISTS : 데이터의 존재 유무를 확인함.
+
+-- 질의 4-19 EXISTS 연산자로 대한민국에 거주하는 고객에게 판매한 도서의 총 판매액을 구하시오.
+SELECT  SUM(salesprice) "Total"
+FROM    orders od
+WHERE   EXISTS(SELECT *
+                FROM customer cs
+                WHERE address LIKE '%대한민국%' 
+                                AND cs.custid = od.custid);
+
+SELECT  SUM(salesprice) "Total"
+FROM    orders od
+WHERE   custid IN(SELECT custid
+                FROM customer 
+                WHERE address LIKE '%대한민국%');
+-----------------------
+
+
 ROLLBACK;
