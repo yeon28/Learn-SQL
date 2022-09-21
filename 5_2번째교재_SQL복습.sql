@@ -1,0 +1,258 @@
+-->> 01 CREATE TABLE 
+
+--
+select rowid, empno ,ename from emp;
+
+--CREATE TABLE  : 테이블 생성
+CREATE TABLE EMP01(
+EMPNO NUMBER(4),
+ENAME VARCHAR2(20),
+SAL NUMBER(7, 2));
+
+select * from emp01;
+-- desc : describe
+desc emp01;
+-- 컬럼의 길이와 속성 출력
+
+-- sub query로 테이블 생성 가능함.
+CREATE TABLE EMP02
+AS 
+SELECT *FROM EMP;
+-- 서브쿼리로 EMP테이블과 동일한 테이블을 생성 및 모든 행들을 자동 INSERT 함.
+SELECT * FROM EMP02;
+DESC EMP02;
+
+--
+CREATE TABLE EMP03
+AS
+SELECT EMPNO, ENAME FROM EMP;
+
+SELECT * FROM EMP03;
+DESC EMP03;
+
+--
+CREATE TABLE EMP04
+AS
+SELECT EMPNO,ENAME, SAL FROM EMP;
+
+SELECT * FROM EMP04;
+DESC EMP04;
+
+--
+CREATE TABLE EMP05
+AS
+SELECT * FROM EMP
+WHERE DEPTNO = 10;
+
+SELECT * FROM EMP05;
+
+--테이블만 생성하고 행들은 복사 안 함.(테이블 구조만 생성하기.)
+CREATE TABLE EMP06
+AS
+SELECT * FROM EMP
+WHERE 1=0;
+
+SELECT * FROM EMP06;
+
+-->> 02 ALTER TABLE
+
+--ADD : 컬럼 추가
+ALTER TABLE EMP01
+ADD(JOB VARCHAR2(9));
+
+select * from emp01;
+desc emp01;
+
+--MODIFY : 컬럼 크기 변경
+ALTER TABLE EMP01
+MODIFY(JOB VARCHAR2(30));
+
+desc emp01;
+
+--DROP COLUMN : 컬럼 삭제
+ALTER TABLE EMP01
+DROP COLUMN JOB;
+
+desc emp01;
+
+-- SET UNSUED : 실제 삭제하기(DROP)과 다름
+ALTER TABLE EMP02
+SET UNUSED(JOB);-- EMP02테이블을 JOB컬럼을 UNUSED로 세팅함.
+
+ALTER TABLE EMP02
+DROP UNUSED COLUMNS; -- UNUSED로 세팅된 모든 컬럼들을 일괄 삭제함.
+
+SELECT * FROM EMP02;
+
+-->> 03 DROP TABLE
+
+-- 
+DROP TABLE EMP01;
+SELECT * FROM EMP01; --  "table or view does not exist" 없는 테이블
+
+-->> TRUNCATE
+
+-- TRUNCATE: 모든 행들을 삭제하지만, 테이블 구조는 삭제하지 않음
+TRUNCATE TABLE EMP02;
+SELECT * FROM EMP02; -- TABLE 형식은 여전히 존재함, 내용 없음
+
+-->> RENAME
+
+-- 
+RENAME EMP02 TO TEST;
+RENAME TEST TO EMP02;
+
+-->> DATA DICTIONARY(데이터 사전) & " VIEW(데이터 사전 보기)
+
+-- DATA DICTIONARY(데이터 사전)
+
+--
+DESC USER_TABLES; --USER_TABLES 구조 보기
+SHOW USER; -- 현재 사용자 (MADANG)이라고 알려줌.
+
+-- 
+SELECT TABLE_NAME FROM USER_TABLES -- 현재 유저가 만든 테이블들에서 데이블 명을 찾아옴.
+ORDER BY TABLE_NAME DESC; -- 내림차순 출력(큰수부터)
+
+--ALL_TABLES
+DESC ALL_TABLES;
+SELECT OWNER, TABLE_NAME FROM ALL_TABLES;
+
+-- DBA_데이터딕셔너리뷰
+DESC DBA_TABLES;
+-- SP2-0749: "DBA_TABLES" 동의어의 순환 경로를 분석할 수 없습니다.(MADANG접속시)
+SELECT TABLE_NAME, OWNER
+FROM DBA_TABLES;
+-- 테이블을 찾을 수 없음(MADANG접속시)
+-- +) SYS 로 접속시 찾을 수 있음.
+
+-->> 
+
+--
+CREATE TABLE DEPT01
+AS
+SELECT *FROM DEPT;
+
+-- 기본 INSERT INTO 작성 원칙
+INSERT INTO DEPT01
+(DEPTNO, DNAME, LOC)
+VALUES(10, 'ACCOUNTING', 'NEW YORK');
+
+-- INSERT의 잘못된 사용 예시
+INSERT INTO DEPT01
+(DEPTNO, DNAME, LOC)
+VALUES (10, 'ACCOUNTING'); 
+-- ERROR : "not enough values" 값을 2개 입력해야 하는데 1개만 입력함
+
+INSERT INTO DEPT01
+(DEPTNO, DNAME, LOC)
+VALUES(10, 'ACCOUNTING', 'NEW YORK', 20); 
+-- ERROR : "too many values" 값이 너무 많음
+
+INSERT INTO DEPT01
+(NUM, DNAME, LOC)
+VALUES(10, 'ACCOUNTING', 'NEW YORK'); 
+-- ERROR : "NUM": invalid identifier" 컬럼명을 잘못 입력함.
+
+INSERT INTO DEPT01
+(DEPTNO, DNAME, LOC)
+VALUES(10, ACCOUNTING, 'NEW YORK');
+-- ERROR : "column not allowed here" ACCOUNTING은 컬럼에서 지정함 데이터 타입이 아님.
+
+INSERT INTO DEPT01
+--(DEPTNO, DNAME, LOC) -- 생략가능
+VALUES(10, 'ACCOUNTING', 'NEW YORK'); 
+-- VALUES에 있는 속성 값이 DESC EMP01의 컬럼 순서대로 저장됨.
+
+-- INSERT NULL 값을 삽입하기
+
+-- NULL 값 넣기 방법
+INSERT INTO DEPT01
+(DEPTNO, DNAME)
+VALUES (30, 'SALES'); -- 기본 방법
+
+-- 다른 방법 예시들
+INSERT INTO DEPT01
+VALUES (40, 'OPERATIONS', NULL);
+
+INSERT INTO DEPT01
+VALUES (50, '', 'CHICAGO'); 
+
+SELECT * FROM DEPT01;
+
+-- 서브쿼리로 데이터 삽입
+CREATE TABLE DEPT02
+AS
+SELECT * FROM DEPT WHERE 1=0;
+
+-- 서브쿼리 데이터 삽입 기본 방식
+INSERT INTO DEPT02
+SELECT * FROM DEPT;
+
+SELECT * FROM DEPT02;
+
+-->> 다중 테이블에 다중 행 입력
+
+-->> UPDATE
+
+--
+CREATE TABLE EMP01
+AS
+SELECT * FROM EMP;
+
+UPDATE EMP01
+SET DEPTNO=30; -- 모두 30으로 바꿔줌.
+
+--
+UPDATE EMP01
+SET SAL = SAL * 1.1; -- 10퍼센트 인상
+
+-- 
+UPDATE EMP01
+SET HIREDATE = SYSDATE; -- 오늘 날짜로 변형
+
+-- 2개 이상의 값 변경하기
+UPDATE EMP01
+SET HIREDATE = SYSDATE, SAL=50, COMM=4000
+WHERE ENAME='SCOTT'; 
+
+SELECT * FROM EMP01;
+
+-- 서브쿼리로 데이터 수정
+UPDATE DEPT02
+SET LOC=(SELECT LOC
+            FROM DEPT02
+            WHERE DEPTNO=40)
+WHERE DEPTNO=20;
+-- DEPTNO=20인 행을 SET함.
+
+UPDATE DEPT02
+SET (DNAME, LOC)=(SELECT DNAME, LOC
+                    FROM DEPT02
+                    WHERE DEPTNO=40)
+WHERE DEPTNO=20;
+
+SELECT * FROM EMP02;
+
+-->> DELETE
+
+--
+DELETE FROM DEPT01;
+SELECT * FROM DEPT01;
+-- 이렇게 사용하면 안됨.
+
+DELETE FROM DEPT02
+WHERE DEPTNO=30;
+-- 조건을 달아 사용할 것.
+
+--
+DELETE FROM EMP01
+WHERE DEPTNO=(SELECT DEPTNO -- 30
+                FROM DEPT
+                WHERE DNAME='SALES');
+    
+SELECT * FROM EMP01;
+
+ROLLBACK;
+
+-->>
